@@ -1,5 +1,6 @@
 from PyInquirer import prompt
 from user import user_list,user_involved
+import json
 
 expense_questions = [
     {
@@ -30,19 +31,20 @@ expense_questions = [
 def new_expense(*args):
     #Add an expense from 3 arguments : Amount, Label, Spender
     infos = prompt(expense_questions)
-    involved_users = infos['involved']
+    involved_users = []
     with open('expense_report.csv', 'a') as file:
-     involved = '[' + infos['spender'] 
+     involved = '[' + infos['spender']
      for user in infos['involved']:
          if user != infos['spender']:
           involved += '/' + user
-          involved_users.append(user)
+         involved_users.append(user)
      involved += ']'
+     involved_users.append(infos['spender'])
      line = infos['amount'] + ',' + infos['label'] + ',' + infos['spender'] + ',' + involved + '\n'
      file.write(line)
     print('Expense Added!')
     #Update users info with expense
-    file = open('users.json', 'w')
+    file = open('users.json', 'r')
     data = json.load(file)
     spender = data[infos['spender']]
     total = int(infos['amount'])
@@ -52,6 +54,8 @@ def new_expense(*args):
     for user in involved_users:
       if user != infos['spender']:
         data[user]['owe'] += share
+    with open("users.json", "w") as write_file:
+     json.dump(data, write_file)
     return True
 
 
