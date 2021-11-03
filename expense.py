@@ -1,4 +1,5 @@
 from PyInquirer import prompt
+from user import user_list,user_involved
 
 expense_questions = [
     {
@@ -12,19 +13,45 @@ expense_questions = [
         "message":"New Expense - Label: ",
     },
     {
-        "type":"input",
+        "type":"list",
         "name":"spender",
         "message":"New Expense - Spender: ",
+        "choices": user_list
+    },
+    {
+        "type":"checkbox",
+        "name":"involved",
+        "message":"New Expense - Involved: ",
+        "choices": user_involved
     },
 
 ]
 
-
-
 def new_expense(*args):
+    #Add an expense from 3 arguments : Amount, Label, Spender
     infos = prompt(expense_questions)
-    # Writing the informations on external file might be a good idea ¯\_(ツ)_/¯
-    print("Expense Added !")
+    involved_users = infos['involved']
+    with open('expense_report.csv', 'a') as file:
+     involved = '[' + infos['spender'] 
+     for user in infos['involved']:
+         if user != infos['spender']:
+          involved += '/' + user
+          involved_users.append(user)
+     involved += ']'
+     line = infos['amount'] + ',' + infos['label'] + ',' + infos['spender'] + ',' + involved + '\n'
+     file.write(line)
+    print('Expense Added!')
+    #Update users info with expense
+    file = open('users.json', 'w')
+    data = json.load(file)
+    spender = data[infos['spender']]
+    total = int(infos['amount'])
+    share = int(infos['amount']) / len(involved_users)
+    spender['spent'] += total
+    spender['owe'] += share - total
+    for user in involved_users:
+      if user != infos['spender']:
+        data[user]['owe'] += share
     return True
 
 
